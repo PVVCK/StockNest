@@ -12,12 +12,12 @@ import lombok.Getter;
 public class Configurations {
 
 	@Bean
-    public ModelMapper modelMapper() {
+     ModelMapper modelMapper() {
         return new ModelMapper();
     }
 	
 	@Bean
-	public RestTemplate restTemplate()
+	 RestTemplate restTemplate()
 	{
 		return new RestTemplate();
 	}

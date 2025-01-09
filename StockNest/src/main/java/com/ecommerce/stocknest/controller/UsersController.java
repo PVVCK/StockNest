@@ -14,10 +14,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ecommerce.stocknest.dto.AddUsersDTO;
-import com.ecommerce.stocknest.dto.UsersDTO;
+import com.ecommerce.stocknest.dto.FetchUsersDTO;
 import com.ecommerce.stocknest.exception.ExecutionFailed;
 import com.ecommerce.stocknest.response.APIResponse;
 import com.ecommerce.stocknest.service.user.UsersServiceImpl;
@@ -91,7 +92,7 @@ public class UsersController {
 		try {
 			
 			
-			List<UsersDTO> allUsers = userServiceImpl.getAllUsers();
+			List<FetchUsersDTO> allUsers = userServiceImpl.getAllUsers();
 			APIResponse apiResponse = new APIResponse();
 			apiResponse.setSuccess(true);
 			apiResponse.setTimestamp(LocalDateTime.now());
@@ -142,4 +143,45 @@ public class UsersController {
 		}
 		
 	}
+	
+	@PostMapping("/create-user-cart")
+	public ResponseEntity<APIResponse> assignCartToUser(@RequestParam(name="userId") Long usersId)
+	{
+		try {
+			
+			APIResponse apiResponse = new APIResponse();
+			apiResponse.setSuccess(true);
+			apiResponse.setTimestamp(LocalDateTime.now());
+			apiResponse.setData(userServiceImpl.createCartForUser(usersId));
+			
+			
+			return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			throw e;
+		}
+	}
+	
+	@PostMapping("/add-user-cartItems")
+	public ResponseEntity<APIResponse> addCartItemsToCartFromUser(@RequestParam(name="userId") Long usersId, 
+																  @RequestParam(name="productId")Long productId, 
+																  @RequestParam(name="quantity", defaultValue = "1") Integer quantity)
+	{
+		try {
+			APIResponse apiResponse = new APIResponse();
+			apiResponse.setSuccess(true);
+			apiResponse.setTimestamp(LocalDateTime.now());
+			apiResponse.setData(userServiceImpl.addCartItemFromUser(usersId,productId,quantity));
+			
+			
+			return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			throw e;
+		}
+	}
 }
+
+
+
+

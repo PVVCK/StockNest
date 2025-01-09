@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.ecommerce.stocknest.exception.ExecutionFailed;
 import com.ecommerce.stocknest.model.Cart;
 import com.ecommerce.stocknest.model.CartItem;
 import com.ecommerce.stocknest.model.Product;
@@ -32,25 +33,56 @@ public class CartItemServiceImpl implements CartItemService {
     @Transactional(rollbackOn = Exception.class)
     @Override
     public CartItem addCartItem(Long cartId, Long productId, int quantity) {
+        // Fetch cart and product
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new NoSuchElementException("Cart not found"));
-
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new NoSuchElementException("Product not found"));
 
-        	
-        CartItem cartItem = new CartItem();
-        cartItem.setProduct(product);
-        cartItem.setQuantity(quantity);
-        cartItem.setUnitPrice(product.getPrice());
-        cartItem.setTotalPrice(product.getPrice().multiply(BigDecimal.valueOf(quantity)));
-        cartItem.setCart(cart);
-        
-         cartItemRepository.save(cartItem);
-        cartRepository.updateCartTotal(cartItem.getCart().getCartId());
-        
-        return cartItem;
+        // Check if the cart already contains the product
+        Optional<CartItem> existingCartItemOpt = cartItemRepository.findByCart_CartIdAndProduct_ProductId(cartId, productId);
+
+        if (existingCartItemOpt.isPresent()) {
+            // If product exists in the cart, update the quantity
+            CartItem existingCartItem = existingCartItemOpt.get();
+            int updatedQuantity = existingCartItem.getQuantity() + quantity;
+
+            // Check if the updated quantity is valid
+            if (product.getInventory() < updatedQuantity) {
+                throw new ExecutionFailed("Quantity exceeds the available inventory");
+            }
+
+            // Update the cart item
+            existingCartItem.setQuantity(updatedQuantity);
+            existingCartItem.setTotalPrice(product.getPrice().multiply(BigDecimal.valueOf(updatedQuantity)));
+            cartItemRepository.save(existingCartItem);
+
+            // Update the cart total
+            cartRepository.updateCartTotal(cartId);
+
+            return existingCartItem;
+        } else {
+            // If product does not exist in the cart, create a new cart item
+            if (product.getInventory() < quantity) {
+                throw new ExecutionFailed("Quantity exceeds the available inventory");
+            }
+
+            CartItem newCartItem = new CartItem();
+            newCartItem.setProduct(product);
+            newCartItem.setQuantity(quantity);
+            newCartItem.setUnitPrice(product.getPrice());
+            newCartItem.setTotalPrice(product.getPrice().multiply(BigDecimal.valueOf(quantity)));
+            newCartItem.setCart(cart);
+
+            cartItemRepository.save(newCartItem);
+
+            // Update the cart total
+            cartRepository.updateCartTotal(cartId);
+
+            return newCartItem;
+        }
     }
+
     
     @Transactional(rollbackOn = Exception.class)
     @Override
@@ -58,6 +90,10 @@ public class CartItemServiceImpl implements CartItemService {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new NoSuchElementException("CartItem not found"));
 
+        if(cartItem.getProduct().getInventory()<quantity)
+        {
+        	throw new ExecutionFailed("Quantity is more than the Available Inventory");
+        }
         cartItem.setQuantity(quantity);
         cartItem.setTotalPrice(cartItem.getUnitPrice().multiply(BigDecimal.valueOf(quantity)));
 

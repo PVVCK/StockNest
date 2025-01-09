@@ -30,7 +30,7 @@ public class Users {
     @Column(nullable = false, unique = true)
     private String email;
 
-    private Integer phoneNumber;
+    private Long phoneNumber;
     
     @JsonManagedReference
     @OneToMany(mappedBy = "users", cascade = CascadeType.ALL, orphanRemoval = true)

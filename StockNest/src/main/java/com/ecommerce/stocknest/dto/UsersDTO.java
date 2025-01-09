@@ -12,5 +12,5 @@ public class UsersDTO {
 	 private Long userId;
 	 private String username;
 	 private String email;
-	 private Integer phoneNumber;
+	 private Long phoneNumber;
 }

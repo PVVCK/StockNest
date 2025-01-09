@@ -25,5 +25,5 @@ public class AddUsersDTO {
 	  @Min(value = 1000000000, message = "Phone number must be exactly 10 digits")
 	    @Max(value = 9999999999L, message = "Phone number must be exactly 10 digits")
 	  @NotNull(message = "Phone number must not be null")
-	 private Integer phoneNumber;
+	 private Long phoneNumber;
 }

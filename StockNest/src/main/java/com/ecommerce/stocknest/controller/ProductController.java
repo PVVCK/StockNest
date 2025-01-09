@@ -21,7 +21,6 @@ import com.ecommerce.stocknest.dto.ProductDTO;
 import com.ecommerce.stocknest.model.Product;
 import com.ecommerce.stocknest.response.APIResponse;
 import com.ecommerce.stocknest.service.product.ProductServiceImpl;
-import com.ecommerce.stocknest.util.ExecutionTimer;
 
 @RestController
 @RequestMapping("${api.prefix}/product")
@@ -34,15 +33,14 @@ public class ProductController {
 	public ResponseEntity<APIResponse> getAllProducts()
 	{
 		try {
-			ExecutionTimer executionTimer = new ExecutionTimer();
-			System.out.println(executionTimer.getEnteringMethodMessage());
+			
 			List<Product> allProducts = productServiceImpl.getAllProducts();
 			APIResponse apiResponse = new APIResponse();
 			apiResponse.setSuccess(true);
 			apiResponse.setTimestamp(LocalDateTime.now());
 			apiResponse.setData(allProducts);
 			
-			System.out.println(executionTimer.getLeavingMethodMessage());
+			
 			return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -52,7 +50,7 @@ public class ProductController {
 	}
 	
 	@GetMapping("/get/productid/{id}")
-	public ResponseEntity<APIResponse> getCategoryById(@PathVariable(name ="id") Long productId)
+	public ResponseEntity<APIResponse> getProductById(@PathVariable(name ="id") Long productId)
 	{
 		try {
 			Product product = productServiceImpl.getProductById(productId);

@@ -28,14 +28,6 @@ import jakarta.persistence.UniqueConstraint;
 public class ExecutionFailedExceptionHandler {
 
 
-//	@ExceptionHandler(value = {ExecutionFailed.class})
-//	public ResponseEntity<String> handleExecutionFailed(ExecutionFailed executionFailed)
-//	{
-//		ExecutionFailedException executionFailedException = new ExecutionFailedException
-//				(executionFailed.getMessage());
-//		
-//		return  ResponseEntity.ok("Error:- "+executionFailedException.getMessage());
-//	}
 	
 	@ExceptionHandler(Exception.class)
     public ResponseEntity<APIResponse> handleException(Exception ex) {
