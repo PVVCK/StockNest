@@ -41,14 +41,15 @@ public class Product {
 	private Category category;
 	
 	@JsonManagedReference
-	@OneToMany(mappedBy = "product",cascade = CascadeType.ALL,orphanRemoval = true, fetch = FetchType.EAGER)
+	@OneToMany(mappedBy = "product",cascade = CascadeType.REMOVE,orphanRemoval = true, fetch = FetchType.EAGER)
 	private List<Image> images;
 
 	@JsonBackReference
-	@OneToMany(mappedBy = "product",cascade = CascadeType.REMOVE)
+	@OneToMany(mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
 	private List<CartItem> cartItems;
-	
-	@OneToMany(mappedBy="product",cascade = CascadeType.ALL, orphanRemoval = true)
+
 	@JsonBackReference
+	@OneToMany(mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
 	private List<OrderItem> orderItems;
+
 }

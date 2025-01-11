@@ -1,12 +1,17 @@
 package com.ecommerce.stocknest.service.user;
 
 import java.util.List;
+import java.util.Arrays;
 import java.util.NoSuchElementException;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import com.ecommerce.stocknest.cache.CachingSetup;
 import com.ecommerce.stocknest.dto.AddUsersDTO;
 import com.ecommerce.stocknest.dto.FetchUsersDTO;
 import com.ecommerce.stocknest.dto.UsersDTO;
@@ -34,9 +39,13 @@ public class UsersServiceImpl implements UsersService{
 	@Autowired
 	private CartItemServiceImpl cartItemServiceImpl;
 	
+	@Autowired
+	private CachingSetup cachingSetup;
+	
 	
 	@Override
 	@Transactional(rollbackOn = Exception.class)
+	@CacheEvict(value = "Cache_User_All", allEntries = true)
 	public UsersDTO createUser(AddUsersDTO addUserDTO) {
 		// TODO Auto-generated method stub
 		Users user = modelMapper.map(addUserDTO, Users.class);
@@ -48,6 +57,7 @@ public class UsersServiceImpl implements UsersService{
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
+	@CachePut(value = "Cache_User", key = "#usersId")
 	public UsersDTO updateUser(AddUsersDTO users, Long usersId) {
 		// TODO Auto-generated method stub
 		 Users existingUser = userRepository.findById(usersId)
@@ -72,6 +82,7 @@ public class UsersServiceImpl implements UsersService{
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
+	@Cacheable(value = "Cache_User", key = "#usersId" )
 	public UsersDTO getUserByID(Long usersId) {
 		// TODO Auto-generated method stub
 		Users users = userRepository.findById(usersId)
@@ -82,6 +93,7 @@ public class UsersServiceImpl implements UsersService{
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
+	@Cacheable(value = "Cache_User_All", key = "'allUsers'")
 	public List<FetchUsersDTO> getAllUsers() {
 		// TODO Auto-generated method stub
 		List<Users> usersList = userRepository.findAll();
@@ -99,15 +111,23 @@ public class UsersServiceImpl implements UsersService{
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
+	@CacheEvict(value = "Cache_User", key = "#usersId" )
 	public void deleteUser(Long usersId) {
 		// TODO Auto-generated method stub
 		userRepository.findById(usersId)
-		.ifPresentOrElse(userRepository::delete,
-				() -> {throw new NoSuchElementException("User with Id:- " +usersId +" is not Present");});
-	}
+        .ifPresentOrElse(user -> {
+            userRepository.delete(user);
+            cachingSetup.clearCacheByNames(Arrays.asList("Cache_User_All"));
+        }, 
+        () -> {
+            throw new NoSuchElementException("User with Id:- " + usersId + " is not Present");
+        });
+}
+
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
+	@CachePut(value = "Cache_User", key = "#userId")
 	public Cart createCartForUser(Long userId) {
 		// TODO Auto-generated method stub
 		 Users user = userRepository.findById(userId)
@@ -134,6 +154,7 @@ public class UsersServiceImpl implements UsersService{
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
+	@CachePut(value = "Cache_User", key = "#userId")
 	public CartItem addCartItemFromUser(Long userId, Long productId, int quantity) {
 		// TODO Auto-generated method stub
 		Cart cart = cartRepository.findByUsers_UserId(userId)
@@ -141,4 +162,6 @@ public class UsersServiceImpl implements UsersService{
 		return cartItemServiceImpl.addCartItem(cart.getCartId(), productId, quantity);
 	}
 
+		
+	
 }

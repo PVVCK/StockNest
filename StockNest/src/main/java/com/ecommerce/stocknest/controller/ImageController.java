@@ -55,7 +55,8 @@ public class ImageController {
 	
 	@GetMapping("/download/{productType}/{id}")
 //	@GetMapping("/api/v1/images/image/download/{imageId}")
-	public ResponseEntity<byte[]> downloadImage(@PathVariable(name="id") Long imageId) {
+	public ResponseEntity<byte[]> downloadImage(@PathVariable(name="productType") String productType,
+												@PathVariable(name="id") Long imageId) {
 	    try {
 	        // Fetch the image
 	        Image image = imageServiceImpl.getImageById(imageId);
@@ -75,24 +76,11 @@ public class ImageController {
 	{
 		 try {
 			 imageServiceImpl.updateImage(file, imageId);
-				/*
-				 * byte[] imageBytes = imageServiceImpl.getImageBytesById(imageId);
-				 * 
-				 * // Fetch image details for content type Image image =
-				 * imageServiceImpl.getImageById(imageId);
-				 * 
-				 * // Return the image as binary data with proper headers return
-				 * ResponseEntity.ok()
-				 * .contentType(MediaType.parseMediaType(image.getFileType()))
-				 * .header("Content-Disposition", "inline; filename=\"" + image.getFileName() +
-				 * "\"") .body(imageBytes);
-				 */
-		        // Fetch the updated image details
-		         this.downloadImage(imageId); // null here is just to match 
+				
 		         APIResponse apiResponse = new APIResponse(
 			                true,
 			                LocalDateTime.now(),
-			                null,
+			                "Image Updated successfully",
 			                null
 			        );
 		         return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
@@ -106,28 +94,25 @@ public class ImageController {
 	@DeleteMapping("/delete/{imageId}")
 	public ResponseEntity<APIResponse> deleteImage(@PathVariable Long imageId) throws Exception
 	{
+		
 		try {
-			Image image = imageServiceImpl.getImageById(imageId);
-			if(image!=null)
-			{
-				imageServiceImpl.deleteImageById(imageId);
-			}
-			
-			return ResponseEntity.status(HttpStatus.OK).body( new APIResponse(
-	                true,
-	                LocalDateTime.now(),
-	                null,
-	                null
-	        ));
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
+            
+			imageServiceImpl.deleteImageById(imageId);
+            APIResponse apiResponse = new APIResponse();
+    		apiResponse.setSuccess(true);	
+    		apiResponse.setTimestamp(LocalDateTime.now());
+    		apiResponse.setData("Image Deleted Successfully");
+    		apiResponse.setErrorMessage(null);
+            return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
+        } 
+		
+		catch (Exception e) {
+			// TODO: handle exception
 			throw e;
 		}
 		
 	}
 	
-//	@GetMapping("/allimages/product/{productId")
-//	public ResponseEntity<>
 	
 	@GetMapping("/all-product-images/{productId}")
 	public ResponseEntity<APIResponse> getAllImagesOfProduct(@PathVariable Long productId)

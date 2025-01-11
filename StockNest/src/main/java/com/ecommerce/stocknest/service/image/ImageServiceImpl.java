@@ -1,14 +1,20 @@
 package com.ecommerce.stocknest.service.image;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.ecommerce.stocknest.cache.CachingSetup;
 import com.ecommerce.stocknest.dto.AddProductDTO;
 import com.ecommerce.stocknest.dto.ImageDTO;
 import com.ecommerce.stocknest.model.Image;
@@ -16,6 +22,8 @@ import com.ecommerce.stocknest.model.Product;
 import com.ecommerce.stocknest.repository.ImageRepository;
 import com.ecommerce.stocknest.repository.ProductRepository;
 import com.ecommerce.stocknest.service.product.ProductServiceImpl;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class ImageServiceImpl implements ImageService {
@@ -30,11 +38,16 @@ public class ImageServiceImpl implements ImageService {
 	private ProductServiceImpl productServiceImpl;
 
 	
+	@Autowired
+	private CachingSetup cachingSetup;
+	
 	@Value("${imageDownloadUrl}")
 	private String imageURL;
 	
 	
 	@Override
+	@Transactional(rollbackOn = Exception.class)
+	@Cacheable(value = "Cache_Image", key = "#imageId" )
 	public Image getImageById(Long imageId) {
 		// TODO Auto-generated method stub
 		return imageRepository.findById(imageId)
@@ -42,6 +55,8 @@ public class ImageServiceImpl implements ImageService {
 	}
 	
 	@Override
+	@Transactional(rollbackOn = Exception.class)
+	@Cacheable(value = "Cache_Image_All", key = "'allImages'")
 	public List<Image> getAllImages() {
 		// TODO Auto-generated method stub
 		List<Image> images = imageRepository.findAll();
@@ -53,11 +68,10 @@ public class ImageServiceImpl implements ImageService {
 	}
 	
 	@Override
+	@Transactional(rollbackOn = Exception.class)
+	@Cacheable(value = "Cache_Image_Product", key = "#productId" )
 	public List<Image> getAllImagesOfProduct(Long productId) {
 		// TODO Auto-generated method stub
-//		return imageRepository.findByProduct_ProductId(productId)
-//				.filter(products -> !products.isEmpty()) // Check if the list is non-empty
-//				.orElseThrow(() -> new NoSuchElementException("No Images are attached with Product Id :- "+productId));
 		
 		Product product = productRepository.findById(productId)
 	            .orElseThrow(() -> new NoSuchElementException("Product not found with Product Id: " + productId));
@@ -78,18 +92,29 @@ public class ImageServiceImpl implements ImageService {
 	}
 	
 	@Override
+	@Transactional(rollbackOn = Exception.class)
+	@CacheEvict(value = "Cache_Image", key = "#imageId" )
 	public void deleteImageById(Long imageId) {
 		// TODO Auto-generated method stub
-		
-		imageRepository.findById(imageId)
-		.ifPresentOrElse(imageRepository::delete,
-				() -> {throw new NoSuchElementException("Image with Id:- " +imageId +" is not Present");});
+		System.out.println("in delete");
+		Optional<Image> imageOptional = imageRepository.findById(imageId);
+
+		if (imageOptional.isPresent()) {
+		    Image image = imageOptional.get();
+		    imageRepository.delete(image);
+		    cachingSetup.clearCacheByNames(Arrays.asList("Cache_Image_All"));
+		} else {
+		    throw new NoSuchElementException("Image with Id:- " + imageId + " is not Present");
+		}
 	}
 
 	@Override
+	@Transactional(rollbackOn = Exception.class)
+	@CacheEvict(value = "Cache_Image", allEntries = true)
 	public List<ImageDTO> saveImages(List<MultipartFile> files, Long productId) throws Exception {
 		// TODO Auto-generated method stub
-		Product product = productServiceImpl.getProductById(productId);
+		Product product = productRepository.findById(productId)
+	            .orElseThrow(() -> new NoSuchElementException("Product with Id:- " + productId + " is not Present"));
 		
 		AddProductDTO addProductDTO = new AddProductDTO();
 		addProductDTO.setBrand(product.getBrand());
@@ -131,10 +156,13 @@ public class ImageServiceImpl implements ImageService {
 				throw e;
 			}
 		}
+		System.out.println("exit");
 		return savedImageDto;
 	}
 
 	@Override
+	@Transactional(rollbackOn = Exception.class)
+	@CachePut(value = "Cache_Image", key = "#imageId" )
 	public void updateImage(MultipartFile file, Long imageId) throws Exception {
 	    // Fetch the image by ID
 	    Image image = getImageById(imageId);

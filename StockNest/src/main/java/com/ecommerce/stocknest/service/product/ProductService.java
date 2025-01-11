@@ -9,8 +9,8 @@ import com.ecommerce.stocknest.model.Product;
 public interface ProductService {
 
 	public ProductDTO addProduct(AddProductDTO productDTO);
-	public Product getProductById(Long id);
-	public void deleteProductById(Long id);
+	public ProductDTO getProductById(Long productId);
+	public void deleteProductById(Long productId);
 	public ProductDTO updateProductById(ProductDTO productDTO, Long productId);
 	public List<Product> getAllProducts();
 	public List<Product> getProductsByCategory(String category);

@@ -53,7 +53,7 @@ public class ProductController {
 	public ResponseEntity<APIResponse> getProductById(@PathVariable(name ="id") Long productId)
 	{
 		try {
-			Product product = productServiceImpl.getProductById(productId);
+			ProductDTO product = productServiceImpl.getProductById(productId);
 			APIResponse apiResponse = new APIResponse();
 			apiResponse.setSuccess(true);
 			apiResponse.setTimestamp(LocalDateTime.now());
@@ -92,11 +92,11 @@ public class ProductController {
 	{
 		
 		try {
-			ProductDTO updatedProductDTO = productServiceImpl.updateProductById(productdto, productId);
-			
+			ProductDTO updatedProduct = productServiceImpl.updateProductById(productdto, productId);
+			System.out.println("back");
 			APIResponse apiResponse = new APIResponse();
 			apiResponse.setSuccess(true);
-			apiResponse.setData(updatedProductDTO);
+			apiResponse.setData(updatedProduct);
 			apiResponse.setTimestamp(LocalDateTime.now());
 			return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
 		} catch (Exception e) {
@@ -122,7 +122,7 @@ public class ProductController {
 		}
 	}
 	
-	@GetMapping("/by/brand-and-name") //?brand=Nike&name=AirMax
+	@GetMapping("/get-by/brand-and-name") //?brand=Nike&name=AirMax
 	public ResponseEntity<APIResponse> getProductByBrandAndName(@RequestParam(name = "brand") String brandName, 
 																@RequestParam(name = "name") String productName)
 	{
@@ -141,7 +141,7 @@ public class ProductController {
 	
 	}
 	
-	@GetMapping("/by/category-and-brand")//?category=Shoes&brand=Puma
+	@GetMapping("/get-by/category-and-brand")//?category=Shoes&brand=Puma
 	public ResponseEntity<APIResponse> getProductByCategoryAndBrand(@RequestParam(name = "category") String category,
 																	@RequestParam(name = "brand") String brandName)
 	{
