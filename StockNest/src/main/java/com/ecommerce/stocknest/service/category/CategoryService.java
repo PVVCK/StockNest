@@ -7,11 +7,11 @@ import com.ecommerce.stocknest.model.Category;
 
 public interface CategoryService {
 
-	public Category getCategoryById(Long id);
+	public Category getCategoryById(Long categoryId);
 	public Category getCategoryByName(String name);
 	public List<Category> getAllCategories();
 	public Category addCategory(CategoryDTO categoryDTO);
 	public Category updateCategory(CategoryDTO categoryDTO, Long categoryId);
-	public void deleteCategory(Long id);
+	public void deleteCategory(Long categoryId);
 	
 }

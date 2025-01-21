@@ -93,7 +93,6 @@ public class ProductController {
 		
 		try {
 			ProductDTO updatedProduct = productServiceImpl.updateProductById(productdto, productId);
-			System.out.println("back");
 			APIResponse apiResponse = new APIResponse();
 			apiResponse.setSuccess(true);
 			apiResponse.setData(updatedProduct);

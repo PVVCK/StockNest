@@ -54,10 +54,9 @@ public class ImageController {
 	
 	
 	@GetMapping("/download/{productType}/{id}")
-//	@GetMapping("/api/v1/images/image/download/{imageId}")
 	public ResponseEntity<byte[]> downloadImage(@PathVariable(name="productType") String productType,
 												@PathVariable(name="id") Long imageId) {
-	    try {
+//	    try {
 	        // Fetch the image
 	        Image image = imageServiceImpl.getImageById(imageId);
 
@@ -66,15 +65,16 @@ public class ImageController {
 	                .contentType(MediaType.parseMediaType(image.getFileType()))
 	                .header("Content-Disposition", "inline; filename=\"" + image.getFileName() + "\"")
 	                .body(image.getImage()); // Directly use the byte[] field
-	    } catch (Exception e) {
-	        throw new RuntimeException("Error fetching image", e);
-	    }
+//	    } catch (Exception e) {
+//	        throw new RuntimeException("Error fetching image", e);
+//	    }
 	}
 	
 	@PutMapping("/update/{imageId}")
 	public ResponseEntity<APIResponse> updateImage(@PathVariable Long imageId, @RequestBody MultipartFile file) throws Exception
 	{
 		 try {
+			 
 			 imageServiceImpl.updateImage(file, imageId);
 				
 		         APIResponse apiResponse = new APIResponse(

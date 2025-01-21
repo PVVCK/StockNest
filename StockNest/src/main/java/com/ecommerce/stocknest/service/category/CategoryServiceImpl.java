@@ -6,12 +6,17 @@ import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import com.ecommerce.stocknest.dto.CategoryDTO;
 import com.ecommerce.stocknest.model.Category;
 import com.ecommerce.stocknest.repository.CategoryRepository;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {
@@ -23,14 +28,18 @@ public class CategoryServiceImpl implements CategoryService {
 	private ModelMapper modelMapper;
 	
 	@Override
-	public Category getCategoryById(Long id) {
+	@Transactional(rollbackOn = Exception.class)
+	@Cacheable(value = "Cache_Category", key = "#categoryId")
+	public Category getCategoryById(Long categoryId) {
 		// TODO Auto-generated method stub
 		System.out.println("inside");
-		return categoryRepository.findById(id)
-				.orElseThrow(()->new NoSuchElementException("Category with Id:- " +id +" is not Present"));
+		return categoryRepository.findById(categoryId)
+				.orElseThrow(()->new NoSuchElementException("Category with Id:- " +categoryId +" is not Present"));
 	}
 
 	@Override
+	@Transactional(rollbackOn = Exception.class)
+	@Cacheable(value = "Cache_Category", key = "#name")
 	public Category getCategoryByName(String name) {
 		return categoryRepository.findByName(name)
 		        .orElseThrow(() -> new NoSuchElementException("Category with Name: " + name + " is not Present"));
@@ -38,12 +47,16 @@ public class CategoryServiceImpl implements CategoryService {
 	}
 
 	@Override
+	@Transactional(rollbackOn = Exception.class)
+	@Cacheable(value = "Cache_Category_All", key = "'allCategories'")
 	public List<Category> getAllCategories() {
 		// TODO Auto-generated method stub
 		return categoryRepository.findAll();
 	}
 
 	@Override
+	@Transactional(rollbackOn = Exception.class)
+	@CacheEvict(value = "Cache_Category_All", allEntries = true)
 	public Category addCategory(CategoryDTO categoryDTO) {
 		// TODO Auto-generated method stub
 		Category category = modelMapper.map(categoryDTO, Category.class);
@@ -55,6 +68,8 @@ public class CategoryServiceImpl implements CategoryService {
 	}
 
 	@Override
+	@Transactional(rollbackOn = Exception.class)
+	@CachePut(value = "Cache_Category", key = "#categoryId")
 	public Category updateCategory(CategoryDTO categoryDTO, Long categoryId) {
 		// TODO Auto-generated method stub
 		    		    
@@ -67,11 +82,13 @@ public class CategoryServiceImpl implements CategoryService {
 	}
 
 	@Override
-	public void deleteCategory(Long id) {
+	@Transactional(rollbackOn = Exception.class)
+	@CacheEvict(value = "Cache_Category", key = "#categoryId")
+	public void deleteCategory(Long categoryId) {
 		// TODO Auto-generated method stub
-		categoryRepository.findById(id)
+		categoryRepository.findById(categoryId)
 		.ifPresentOrElse(categoryRepository::delete, 
-				() -> {throw new NoSuchElementException("Category with Id:- " +id +" is not Present");});
+				() -> {throw new NoSuchElementException("Category with Id:- " +categoryId +" is not Present");});
 	}
 
 }

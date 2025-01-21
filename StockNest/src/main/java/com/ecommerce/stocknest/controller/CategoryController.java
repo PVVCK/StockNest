@@ -45,10 +45,10 @@ public class CategoryController {
 	}
 	
 	@GetMapping("/get/categoryname/{name}")
-	public ResponseEntity<APIResponse> getCategoryById(@PathVariable(name ="name") String categoryName)
+	public ResponseEntity<APIResponse> getCategoryByCategoryName(@PathVariable(name ="name") String categoryName)
 	{
 		try {
-			Category category = categoryServiceImpl.getCategoryByName(categoryName);
+			Category category = categoryServiceImpl.getCategoryByName(categoryName.toLowerCase());
 			APIResponse apiResponse = new APIResponse();
 			apiResponse.setSuccess(true);
 			apiResponse.setTimestamp(LocalDateTime.now());
