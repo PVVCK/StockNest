@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.ecommerce.stocknest.enums.OrderStatus;
@@ -14,6 +15,7 @@ import com.ecommerce.stocknest.model.Cart;
 import com.ecommerce.stocknest.model.CartItem;
 import com.ecommerce.stocknest.model.OrderItem;
 import com.ecommerce.stocknest.model.Orders;
+import com.ecommerce.stocknest.model.Users;
 import com.ecommerce.stocknest.repository.CartRepository;
 import com.ecommerce.stocknest.repository.OrderRepository;
 
@@ -30,20 +32,21 @@ public class OrderServiceImpl implements OrderService {
 	
 	@Override
 	@Transactional(rollbackOn = Exception.class)
-	public void placeOrder(Long cartId) {
+	public String placeOrder(Long cartId, Users user) {
 	    // Fetch the cart
 	    Cart cart = cartRepository.findById(cartId)
 	            .orElseThrow(() -> new RuntimeException("Cart not found"));
-
+//	    System.out.println(cart);
 	    if (cart.getCartItems().isEmpty()) {
 	        throw new RuntimeException("Cart is empty. Cannot place an order.");
 	    }
-
+	    System.out.println("in1");
 	    // Create a new order
 	    Orders orders = new Orders();
 	    orders.setOrderDate(LocalDate.now());
 	    orders.setTotalAmount(cart.getTotalAmount());
 	    orders.setOrderStatus(OrderStatus.PLACED);
+	    orders.setUsers(user);
 
 	  
 	    List<CartItem> cartItemsCopy = new ArrayList<>(cart.getCartItems());
@@ -66,10 +69,13 @@ public class OrderServiceImpl implements OrderService {
 	    cart.getCartItems().clear();
 	    cart.setTotalAmount(BigDecimal.ZERO);
 	    cartRepository.save(cart);
+	    
+	    return "Order placed successfully";
 	}
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
+	@Cacheable(value = "Cache_Order_All", key = "'allOrders'")
 	public List<Orders> getAllOrders() {
 		// TODO Auto-generated method stub
 		List<Orders> orders = orderRepository.findAll();
@@ -81,6 +87,7 @@ public class OrderServiceImpl implements OrderService {
 	
 	@Override
 	@Transactional(rollbackOn = Exception.class)
+	@Cacheable(value = "Cache_Order", key = "#orderId")
 	public Orders getOrderByID(Long orderId) {
 		// TODO Auto-generated method stub
 		

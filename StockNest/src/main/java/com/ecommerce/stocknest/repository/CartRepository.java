@@ -18,4 +18,6 @@ public interface CartRepository extends JpaRepository<Cart, Long>{
     void updateCartTotal(Long cartId);
 	
 	 public Optional<Cart> findByUsers_UserId(Long userId);
+	 
+	 boolean existsByCartIdAndUsers_UserId(Long cartId, Long userId);
 }

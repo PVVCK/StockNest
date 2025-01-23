@@ -180,6 +180,24 @@ public class UsersController {
 			throw e;
 		}
 	}
+	
+	@PostMapping("/user-place-order")
+	public ResponseEntity<APIResponse> userPlacingOrder(@RequestParam(name="cartId") Long cartId,
+														@RequestParam(name="userId")Long userId)
+	{
+		try {
+			APIResponse apiResponse = new APIResponse();
+			apiResponse.setSuccess(true);
+			apiResponse.setTimestamp(LocalDateTime.now());
+			apiResponse.setData(userServiceImpl.userPlacingOrder(userId, cartId));
+			
+			
+			return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			throw e;
+		}
+	}
 }
 
 

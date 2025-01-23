@@ -24,6 +24,8 @@ public interface UsersService {
 	 
 	 public CartItem addCartItemFromUser(Long userId, Long productId, int quantity);
 	 
+	 public String userPlacingOrder(Long userId, Long cartId);
+	 
 	 
 	
 }

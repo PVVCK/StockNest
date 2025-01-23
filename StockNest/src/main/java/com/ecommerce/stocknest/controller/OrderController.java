@@ -21,22 +21,23 @@ public class OrderController {
 	 @Autowired
 	  private OrderServiceImpl orderServiceImpl;
 
-    @PostMapping("/place-order/{cartId}")
-    public ResponseEntity<APIResponse> placeOrder(@PathVariable Long cartId) {
-        try {
-            orderServiceImpl.placeOrder(cartId);
-            
-            APIResponse apiResponse = new APIResponse();
-    		apiResponse.setSuccess(true);	
-    		apiResponse.setTimestamp(LocalDateTime.now());
-    		apiResponse.setData("Order placed successfully!");
-    		apiResponse.setErrorMessage(null);
-            return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
-        } catch (Exception e) {
-			// TODO: handle exception
-			throw e;
-		}
-    }
+//    @PostMapping("/place-order/{cartId}")
+//    public ResponseEntity<APIResponse> placeOrder(@PathVariable Long cartId,) {
+//    						
+//        try {
+//            
+//            
+//            APIResponse apiResponse = new APIResponse();
+//    		apiResponse.setSuccess(true);	
+//    		apiResponse.setTimestamp(LocalDateTime.now());
+//    		apiResponse.setData(orderServiceImpl.placeOrder(cartId));
+//    		apiResponse.setErrorMessage(null);
+//            return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
+//        } catch (Exception e) {
+//			// TODO: handle exception
+//			throw e;
+//		}
+//    }
     
     @GetMapping("/get-all")
     public ResponseEntity<APIResponse> getAllOrders()

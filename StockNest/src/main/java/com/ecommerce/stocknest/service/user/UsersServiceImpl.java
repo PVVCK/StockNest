@@ -1,7 +1,7 @@
 package com.ecommerce.stocknest.service.user;
 
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.modelmapper.ModelMapper;
@@ -21,6 +21,7 @@ import com.ecommerce.stocknest.model.Users;
 import com.ecommerce.stocknest.repository.CartRepository;
 import com.ecommerce.stocknest.repository.UserRepository;
 import com.ecommerce.stocknest.service.cart.cartitem.CartItemServiceImpl;
+import com.ecommerce.stocknest.service.order.OrderServiceImpl;
 
 import jakarta.transaction.Transactional;
 
@@ -41,6 +42,9 @@ public class UsersServiceImpl implements UsersService{
 	
 	@Autowired
 	private CachingSetup cachingSetup;
+	
+	@Autowired
+	private OrderServiceImpl orderServiceImpl;
 	
 	
 	@Override
@@ -82,7 +86,7 @@ public class UsersServiceImpl implements UsersService{
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
-	@Cacheable(value = "Cache_User", key = "#usersId" )
+	@Cacheable(value = "Cache_User", key = "#usersId")
 	public UsersDTO getUserByID(Long usersId) {
 		// TODO Auto-generated method stub
 		Users users = userRepository.findById(usersId)
@@ -160,6 +164,28 @@ public class UsersServiceImpl implements UsersService{
 		Cart cart = cartRepository.findByUsers_UserId(userId)
 				.orElseThrow(() -> new NoSuchElementException("No Carts Associated with User Id:-"+ userId));
 		return cartItemServiceImpl.addCartItem(cart.getCartId(), productId, quantity);
+	}
+
+	@Override
+	@Transactional(rollbackOn = Exception.class)
+	public String userPlacingOrder(Long userId, Long cartId) {
+		// TODO Auto-generated method stub
+		
+		Users user = userRepository.findById(userId)
+	            .orElseThrow(() -> new NoSuchElementException("User with Id :- " + userId + " is not found"));
+		
+		boolean existsCartAndUser = cartRepository.existsByCartIdAndUsers_UserId(cartId, userId);
+		
+		if(existsCartAndUser)
+		{
+			System.out.println("in");
+			 return orderServiceImpl.placeOrder(cartId, user);
+		}
+		else
+		{
+			throw new NoSuchElementException("This Cart :- " + cartId+" is not associated with the User :- "+userId);
+		}
+		
 	}
 
 		
