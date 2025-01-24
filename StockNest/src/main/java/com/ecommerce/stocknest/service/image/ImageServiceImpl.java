@@ -21,7 +21,6 @@ import com.ecommerce.stocknest.model.Image;
 import com.ecommerce.stocknest.model.Product;
 import com.ecommerce.stocknest.repository.ImageRepository;
 import com.ecommerce.stocknest.repository.ProductRepository;
-import com.ecommerce.stocknest.service.product.ProductServiceImpl;
 
 import jakarta.transaction.Transactional;
 
@@ -33,10 +32,6 @@ public class ImageServiceImpl implements ImageService {
 	
 	@Autowired
 	private ProductRepository productRepository;
-	
-	@Autowired
-	private ProductServiceImpl productServiceImpl;
-
 	
 	@Autowired
 	private CachingSetup cachingSetup;
@@ -110,7 +105,7 @@ public class ImageServiceImpl implements ImageService {
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
-	@CacheEvict(value = "Cache_Image", allEntries = true)
+	@CacheEvict(value = "Cache_Image_All", allEntries = true)
 	public List<ImageDTO> saveImages(List<MultipartFile> files, Long productId) throws Exception {
 		// TODO Auto-generated method stub
 		Product product = productRepository.findById(productId)
@@ -150,19 +145,22 @@ public class ImageServiceImpl implements ImageService {
 				    imageDTO.setDownloadUrl(savedImage.getDownloadUrl());
 				    imageDTO.setProductDTO(addProductDTO);
 				    savedImageDto.add(imageDTO);
+				    
+				  
 			    }
 			catch(Exception e)
 			{
 				throw e;
 			}
 		}
-		System.out.println("exit");
+		
 		return savedImageDto;
 	}
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
 	@CachePut(value = "Cache_Image", key = "#imageId" )
+	@CacheEvict(value = "Cache_Image_All", allEntries = true)
 	public void updateImage(MultipartFile file, Long imageId) throws Exception {
 	    // Fetch the image by ID
 	    Image image = getImageById(imageId);

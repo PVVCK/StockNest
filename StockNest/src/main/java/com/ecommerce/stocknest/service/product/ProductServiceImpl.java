@@ -140,6 +140,7 @@ public class ProductServiceImpl implements ProductService{
 	@Override
 	@Transactional(rollbackOn = Exception.class)
 	@CachePut(value = "Cache_Product", key = "#productId")
+	@CacheEvict(value = "Cache_Product_All", allEntries = true)
 	public ProductDTO updateProductById(ProductDTO productDTO, Long productId) {
 		// TODO Auto-generated method stub
 		// Find existing product, else throws error

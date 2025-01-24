@@ -113,7 +113,7 @@ public class ProductController {
 			APIResponse apiResponse = new APIResponse();
 			apiResponse.setSuccess(true);
 			apiResponse.setTimestamp(LocalDateTime.now());
-			apiResponse.setData(null);
+			apiResponse.setData("Product Deleted Successfully");
 			return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block

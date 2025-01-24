@@ -104,7 +104,7 @@ public class CategoryController {
 			
 			APIResponse apiResponse = new APIResponse();
 			apiResponse.setSuccess(true);
-			apiResponse.setData(null);
+			apiResponse.setData("Category Deleted Successfully");
 			apiResponse.setTimestamp(LocalDateTime.now());
 			return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
 		} catch (Exception e) {

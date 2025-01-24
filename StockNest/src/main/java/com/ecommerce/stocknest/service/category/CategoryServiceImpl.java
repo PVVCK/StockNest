@@ -1,5 +1,6 @@
 package com.ecommerce.stocknest.service.category;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -12,6 +13,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import com.ecommerce.stocknest.cache.CachingSetup;
 import com.ecommerce.stocknest.dto.CategoryDTO;
 import com.ecommerce.stocknest.model.Category;
 import com.ecommerce.stocknest.repository.CategoryRepository;
@@ -26,6 +28,9 @@ public class CategoryServiceImpl implements CategoryService {
 	
 	@Autowired
 	private ModelMapper modelMapper;
+	
+	@Autowired
+	private CachingSetup cachingSetup;
 	
 	@Override
 	@Transactional(rollbackOn = Exception.class)
@@ -70,6 +75,7 @@ public class CategoryServiceImpl implements CategoryService {
 	@Override
 	@Transactional(rollbackOn = Exception.class)
 	@CachePut(value = "Cache_Category", key = "#categoryId")
+	@CacheEvict(value = "Cache_Category_All", allEntries = true)
 	public Category updateCategory(CategoryDTO categoryDTO, Long categoryId) {
 		// TODO Auto-generated method stub
 		    		    
@@ -87,8 +93,16 @@ public class CategoryServiceImpl implements CategoryService {
 	public void deleteCategory(Long categoryId) {
 		// TODO Auto-generated method stub
 		categoryRepository.findById(categoryId)
-		.ifPresentOrElse(categoryRepository::delete, 
-				() -> {throw new NoSuchElementException("Category with Id:- " +categoryId +" is not Present");});
+		.ifPresentOrElse(
+			    input -> {
+			        categoryRepository.delete(input);
+			        cachingSetup.clearCacheByNames(Arrays.asList("Cache_Category_All"));
+			    },
+			    () -> {
+			        throw new NoSuchElementException("Category with Id: " + categoryId + " is not Present");
+			    }
+			);
+
 	}
 
 }
