@@ -128,8 +128,11 @@ public class CartItemServiceImpl implements CartItemService {
 	@Override
 	public List<CartItem> getAllCartItems() {
 		// TODO Auto-generated method stub
-		
-		return cartItemRepository.findAll();
+    	List<CartItem> cartItems = cartItemRepository.findAll();
+    	if (cartItems.isEmpty()) {
+	        throw new NoSuchElementException("No CartItems are available in the database.");
+	    }
+		return cartItems;
 				
 	}
 

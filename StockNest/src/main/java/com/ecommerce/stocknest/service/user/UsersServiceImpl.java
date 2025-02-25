@@ -178,7 +178,6 @@ public class UsersServiceImpl implements UsersService{
 		
 		if(existsCartAndUser)
 		{
-			System.out.println("in");
 			 return orderServiceImpl.placeOrder(cartId, user);
 		}
 		else

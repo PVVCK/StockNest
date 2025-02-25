@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +33,7 @@ public class OrderServiceImpl implements OrderService {
 	
 	@Override
 	@Transactional(rollbackOn = Exception.class)
+	@CacheEvict(value = "Cache_Order_All", allEntries = true)
 	public String placeOrder(Long cartId, Users user) {
 	    // Fetch the cart
 	    Cart cart = cartRepository.findById(cartId)
@@ -40,7 +42,7 @@ public class OrderServiceImpl implements OrderService {
 	    if (cart.getCartItems().isEmpty()) {
 	        throw new RuntimeException("Cart is empty. Cannot place an order.");
 	    }
-	    System.out.println("in1");
+	    
 	    // Create a new order
 	    Orders orders = new Orders();
 	    orders.setOrderDate(LocalDate.now());
