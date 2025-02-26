@@ -62,6 +62,7 @@ public class UsersServiceImpl implements UsersService{
 	@Override
 	@Transactional(rollbackOn = Exception.class)
 	@CachePut(value = "Cache_User", key = "#usersId")
+	@CacheEvict(value = "Cache_User_All", allEntries = true)
 	public UsersDTO updateUser(AddUsersDTO users, Long usersId) {
 		// TODO Auto-generated method stub
 		 Users existingUser = userRepository.findById(usersId)
@@ -132,6 +133,7 @@ public class UsersServiceImpl implements UsersService{
 	@Override
 	@Transactional(rollbackOn = Exception.class)
 	@CachePut(value = "Cache_User", key = "#userId")
+	@CacheEvict(value = "Cache_User_All", allEntries = true)
 	public Cart createCartForUser(Long userId) {
 		// TODO Auto-generated method stub
 		 Users user = userRepository.findById(userId)
@@ -159,6 +161,7 @@ public class UsersServiceImpl implements UsersService{
 	@Override
 	@Transactional(rollbackOn = Exception.class)
 	@CachePut(value = "Cache_User", key = "#userId")
+	@CacheEvict(value = "Cache_User_All", allEntries = true)
 	public CartItem addCartItemFromUser(Long userId, Long productId, int quantity) {
 		// TODO Auto-generated method stub
 		Cart cart = cartRepository.findByUsers_UserId(userId)
@@ -168,6 +171,7 @@ public class UsersServiceImpl implements UsersService{
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
+	@CacheEvict(value = "Cache_User_All", allEntries = true)
 	public String userPlacingOrder(Long userId, Long cartId) {
 		// TODO Auto-generated method stub
 		
@@ -178,6 +182,7 @@ public class UsersServiceImpl implements UsersService{
 		
 		if(existsCartAndUser)
 		{
+			
 			 return orderServiceImpl.placeOrder(cartId, user);
 		}
 		else
