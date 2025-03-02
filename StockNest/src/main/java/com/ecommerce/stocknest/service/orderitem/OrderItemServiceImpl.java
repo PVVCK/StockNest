@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.ecommerce.stocknest.model.OrderItem;
@@ -20,6 +21,7 @@ public class OrderItemServiceImpl implements OrderItemService {
 	
 	@Override
 	@Transactional(rollbackOn = Exception.class)
+	@Cacheable(value = "Cache_OrderItems_All", key = "'allOrderItems'")
 	public List<OrderItem> getAllOrderItems() {
 		// TODO Auto-generated method stub
 			List<OrderItem> orderItems = orderItemRepository.findAll();
@@ -32,6 +34,7 @@ public class OrderItemServiceImpl implements OrderItemService {
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
+	@Cacheable(value = "Cache_AllOrderItemsOfOrder", key = "#orderId")
 	public List<OrderItem> getAllOrderItemsOfAOrder(Long orderId) {
 		// TODO Auto-generated method stub
 		return orderItemRepository.findByOrders_OrderId(orderId)
