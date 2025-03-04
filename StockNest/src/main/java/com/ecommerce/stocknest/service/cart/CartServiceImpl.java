@@ -51,8 +51,8 @@ public class CartServiceImpl implements CartService {
     
     @Override
     @Transactional(rollbackOn = Exception.class)
-//	@CachePut(value = "Cache_Cart", key = "#cartId")
-//	@CacheEvict(value = "Cache_Product_All", allEntries = true)
+	@CachePut(value = "Cache_Cart", key = "#cart.cartId")
+	@CacheEvict(value = "Cache_Cart_All", allEntries = true)
     public Cart updateCart(Cart cart) {
         return cartRepository.save(cart);
     }
@@ -122,7 +122,7 @@ public class CartServiceImpl implements CartService {
 
         // Update total amount
         cart.setTotalAmount(calculateTotalAmount(cart));
-
+        cachingSetup.clearCacheByNames(Arrays.asList("Cache_Cart_All"));
         return cartRepository.save(cart);
     }
     
