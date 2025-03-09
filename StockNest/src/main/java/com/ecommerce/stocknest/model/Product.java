@@ -35,7 +35,7 @@ public class Product {
 	private String description;
 	
 
-	@JsonBackReference
+	@JsonManagedReference
 	@ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
 	@JoinColumn(name = "category_id")
 	private Category category;

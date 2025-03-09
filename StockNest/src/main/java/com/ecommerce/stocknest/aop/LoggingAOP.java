@@ -2,73 +2,67 @@ package com.ecommerce.stocknest.aop;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
-import com.ecommerce.stocknest.dto.ProductDTO;
-import com.ecommerce.stocknest.util.LoggingUtil;
 @Component
-@Aspect
+//@Aspect
 public class LoggingAOP {
 
-    private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private static final ThreadLocal<Integer> callDepth = ThreadLocal.withInitial(() -> 0);
+//            // Proceed with the method execution
+//            result = joinPoint.proceed();
+//        }
+//        
+//        catch (Exception e) {
+////            System.err.printf("[%s] ERROR: Exception in method: %s -> %s%n", 
+////                              timestamp, methodName, t.getMessage());
+//            throw e;
+//        }
+//        finally {
+//            // Log method exit
+//            timestamp = LocalDateTime.now().format(TIMESTAMP_FORMATTER);
+//            System.out.printf("[%s] INFO: Exiting method: %s%n", timestamp, methodName);
+//            callDepth.set(callDepth.get() - 1);  // Decrease call depth
+//        }
+//        return result;
+//    }
+	 private static final Logger logger = LoggerFactory.getLogger(LoggingAOP.class);
+	    private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    // Pointcut for controller and service methods
-    @Around("execution(* com.ecommerce.stocknest.controller..*(..)) || execution(* com.ecommerce.stocknest.service..*(..)) && !execution(* com.ecommerce.stocknest.config..*(..))")
-    public Object logExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
-        // Prevent recursion
-        if (callDepth.get() > 5) {
-            System.err.printf("Skipping AOP for %s to avoid recursion.%n", joinPoint.getSignature().toShortString());
-            return joinPoint.proceed();
-        }
+	    private static final ThreadLocal<Integer> callDepth = ThreadLocal.withInitial(() -> 0);
 
-        callDepth.set(callDepth.get() + 1);  // Increase call depth
-        String methodName = joinPoint.getSignature().toShortString();
-        String timestamp = LocalDateTime.now().format(TIMESTAMP_FORMATTER);
-        
-        // Get method arguments
-        Object[] methodArgs = joinPoint.getArgs();
-        StringBuilder methodArgsStr = new StringBuilder();
+	    @Around("execution(* com.ecommerce.stocknest..*(..)) "
+	            + "&& !execution(* com.ecommerce.stocknest.aop..*(..)) "
+	            + "&& !execution(* com.ecommerce.stocknest.config..*(..))"
+	            + "&& !execution(* com.ecommerce.stocknest.security..*(..))")
+	    public Object logExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
+	        if (callDepth.get() > 10) {
+	            logger.warn("Skipping execution to prevent recursion: {}", joinPoint.getSignature().toShortString());
+	            return null; // Prevent infinite recursion
+	        }
 
-        
-        for (Object arg : methodArgs) {
-            if (arg != null) {
-                if (arg instanceof ProductDTO) {
-                    // Using the utility method to filter out null fields
-                    methodArgsStr.append(LoggingUtil.getNonNullFields(arg)).append(", ");
-                } else {
-                    methodArgsStr.append(arg.toString()).append(", ");
-                }
-            }
-        }
+	        callDepth.set(callDepth.get() + 1); // Track depth
+	        String timestamp = LocalDateTime.now().format(TIMESTAMP_FORMATTER);
+	        String methodName = joinPoint.getSignature().toShortString();
 
-        // Log method entry with arguments
-        System.out.printf("[%s] INFO: Entering method: %s with arguments: %s%n", 
-                          timestamp, methodName, methodArgsStr);
+	        logger.info("[{}] Entering method: {} with arguments: {}", timestamp, methodName, Arrays.toString(joinPoint.getArgs()));
 
-        // Log method entry without arguments displaying in logs
-//        System.out.printf("[%s] INFO: Entering method: %s%n", timestamp, methodName);
-        Object result;
-        try {
-            // Proceed with the method execution
-            result = joinPoint.proceed();
-        }
-        
-        catch (Exception e) {
-//            System.err.printf("[%s] ERROR: Exception in method: %s -> %s%n", 
-//                              timestamp, methodName, t.getMessage());
-            throw e;
-        }
-        finally {
-            // Log method exit
-            timestamp = LocalDateTime.now().format(TIMESTAMP_FORMATTER);
-            System.out.printf("[%s] INFO: Exiting method: %s%n", timestamp, methodName);
-            callDepth.set(callDepth.get() - 1);  // Decrease call depth
-        }
-        return result;
-    }
+	        long startTime = System.currentTimeMillis();
+	        Object result;
+
+	        try {
+	            result = joinPoint.proceed();
+	        } finally {
+	            long executionTime = System.currentTimeMillis() - startTime;
+	            timestamp = LocalDateTime.now().format(TIMESTAMP_FORMATTER);
+	            logger.info("[{}] Exiting method: {}. Execution time: {} ms", timestamp, methodName, executionTime);
+	            callDepth.set(callDepth.get() - 1); // Reset depth after method execution
+	        }
+
+	        return result;
+	    }
 }

@@ -7,10 +7,13 @@ import com.ecommerce.stocknest.dto.FetchUsersDTO;
 import com.ecommerce.stocknest.dto.UsersDTO;
 import com.ecommerce.stocknest.model.Cart;
 import com.ecommerce.stocknest.model.CartItem;
+import com.ecommerce.stocknest.model.Users;
 
 public interface UsersService {
 
 	public UsersDTO getUserByID(Long usersId);
+	
+	public Users findUserByUserName(String userName);
 	
 	public List<FetchUsersDTO> getAllUsers();
 	

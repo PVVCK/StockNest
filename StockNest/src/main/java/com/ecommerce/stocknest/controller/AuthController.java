@@ -54,7 +54,7 @@ public class AuthController {
 	    		apiResponse.setTimestamp(LocalDateTime.now());
 	    		apiResponse.setData(usersServiceImpl.createUser(addUsersDTO));
 	    		apiResponse.setErrorMessage(null);
-	    		System.out.println("Exiting");
+	    		
 	            return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
 	        } 
 			

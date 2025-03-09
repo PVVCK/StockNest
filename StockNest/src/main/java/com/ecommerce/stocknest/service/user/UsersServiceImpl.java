@@ -192,6 +192,14 @@ public class UsersServiceImpl implements UsersService{
 		
 	}
 
+	@Override
+	@CachePut(value = "Cache_User", key = "#userName")
+	public Users findUserByUserName(String userName) {
+		// TODO Auto-generated method stub
+		return userRepository.findByUsername(userName)
+				.orElseThrow(() -> new NoSuchElementException("User with Name :- " + userName + " is not found"));
+	}
+
 		
 	
 }

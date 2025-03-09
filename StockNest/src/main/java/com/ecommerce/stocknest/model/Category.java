@@ -2,6 +2,7 @@ package com.ecommerce.stocknest.model;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.Entity;
@@ -26,7 +27,8 @@ public class Category {
 	
 	 // Use JsonIgnoreProperties to avoid infinite recursion
 //    @JsonIgnoreProperties("category")  // This will prevent the 'products' field in Category from being serialized
-	@JsonManagedReference
+//	@JsonManagedReference
+	@JsonIgnore
 	@OneToMany(mappedBy = "category")
 	private List<Product> products;
 	
