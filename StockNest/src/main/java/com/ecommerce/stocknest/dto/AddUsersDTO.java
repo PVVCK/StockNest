@@ -1,5 +1,7 @@
 package com.ecommerce.stocknest.dto;
 
+import com.ecommerce.stocknest.model.Role;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -16,6 +18,9 @@ public class AddUsersDTO {
 
 	 @NotBlank(message = "UserName")
 	 private String username;
+	 
+	 @NotBlank(message = "Password")
+	 private String password;
 	 @NotBlank(message = "Email")
 	 @Pattern(
 		        regexp = "^[A-Za-z0-9._%+-]+@(gmail\\.com|yahoo\\.com|outlook\\.com)$",
@@ -26,4 +31,6 @@ public class AddUsersDTO {
 	    @Max(value = 9999999999L, message = "Phone number must be exactly 10 digits")
 	  @NotNull(message = "Phone number must not be null")
 	 private Long phoneNumber;
+	  
+	 private String role;
 }

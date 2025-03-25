@@ -22,6 +22,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.ecommerce.stocknest.response.APIResponse;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.persistence.UniqueConstraint;
 
 @RestControllerAdvice
@@ -34,6 +35,12 @@ public class ExecutionFailedExceptionHandler {
         String errorMessage = ex.getMessage();
         String apiResponseMessage;
         HttpStatus httpStatus;
+        
+        if(ex instanceof ExpiredJwtException)
+        {
+        	httpStatus = HttpStatus.UNAUTHORIZED;
+        	apiResponseMessage = "Error:- ExceptionType[ "+ex.getClass()+" ] " + errorMessage;
+        }
         
         if (ex instanceof NotFoundException || ex instanceof NoSuchElementException || ex instanceof NoHandlerFoundException) 
         {
