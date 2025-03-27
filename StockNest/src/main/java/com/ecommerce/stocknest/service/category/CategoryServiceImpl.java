@@ -37,7 +37,6 @@ public class CategoryServiceImpl implements CategoryService {
 	@Cacheable(value = "Cache_Category", key = "#categoryId")
 	public Category getCategoryById(Long categoryId) {
 		// TODO Auto-generated method stub
-		System.out.println("inside");
 		return categoryRepository.findById(categoryId)
 				.orElseThrow(()->new NoSuchElementException("Category with Id:- " +categoryId +" is not Present"));
 	}
@@ -56,7 +55,12 @@ public class CategoryServiceImpl implements CategoryService {
 	@Cacheable(value = "Cache_Category_All", key = "'allCategories'")
 	public List<Category> getAllCategories() {
 		// TODO Auto-generated method stub
-		return categoryRepository.findAll();
+		List<Category> category = categoryRepository.findAll();
+		
+		 if (category.isEmpty()) {
+		        throw new NoSuchElementException("No Categories are available in the database.");
+		    }
+		    return category;
 	}
 
 	@Override
