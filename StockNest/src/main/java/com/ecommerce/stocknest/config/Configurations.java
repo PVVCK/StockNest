@@ -18,10 +18,11 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import com.ecommerce.stocknest.security.JWTFilter;
+import com.ecommerce.stocknest.interceptor.JWTInterceptor;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 import lombok.Getter;
@@ -32,12 +33,17 @@ import lombok.Getter;
 @EnableAsync
 @EnableScheduling
 @EnableWebSecurity
-public class Configurations {
+public class Configurations implements WebMvcConfigurer{
 	
-	private final JWTFilter jwtFilter;
+	
+//	private final JWTFilter jwtFilter;
+	 private final JWTInterceptor jwtInterceptor;
 
-	public Configurations(JWTFilter jwtFilter) {
-        this.jwtFilter = jwtFilter;
+	public Configurations(
+//			JWTFilter jwtFilter,
+			JWTInterceptor jwtInterceptor) {
+//        this.jwtFilter = jwtFilter;
+        this.jwtInterceptor = jwtInterceptor;
     }
 	
 	@Bean
@@ -65,21 +71,34 @@ public class Configurations {
 	        return new BCryptPasswordEncoder();
 	    }
 	 
+//	 @Bean
+//	    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//	        http
+//	            .csrf(csrf -> csrf.disable())  // Disable CSRF for stateless APIs
+//	            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // No session management
+//	            .authorizeHttpRequests(auth -> auth
+//	                .requestMatchers("/stocknest/auth/**").permitAll()  // Public authentication endpoints (Login, Register)
+//	                .requestMatchers("/stocknest/product/**", "/api/image/**").permitAll()  // Allow all GET requests (Restricted in Filter)
+//	                .anyRequest().authenticated() // All other endpoints require authentication
+//	            )
+//	            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+//
+//	        return http.build();
+//	    }
+//	 
 	 @Bean
 	    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 	        http
-	            .csrf(csrf -> csrf.disable())  // Disable CSRF for stateless APIs
-	            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // No session management
+	            .csrf(csrf -> csrf.disable())  
+	            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) 
 	            .authorizeHttpRequests(auth -> auth
-	                .requestMatchers("/stocknest/auth/**").permitAll()  // Public authentication endpoints (Login, Register)
-	                .requestMatchers("/stocknest/product/**", "/api/image/**").permitAll()  // Allow all GET requests (Restricted in Filter)
-	                .anyRequest().authenticated() // All other endpoints require authentication
-	            )
-	            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+	                .requestMatchers("/stocknest/auth/**").permitAll()  
+	                .requestMatchers("/stocknest/product/**", "/stocknest/image/**").permitAll()  
+	                .anyRequest().authenticated() 
+	            );
 
 	        return http.build();
 	    }
-	 
 
 
 	    @Bean
@@ -87,5 +106,9 @@ public class Configurations {
 	        return authenticationConfiguration.getAuthenticationManager();
 	    }
 	 
-	 
+	    // Register Interceptor
+	    @Override
+	    public void addInterceptors(InterceptorRegistry registry) {
+	        registry.addInterceptor(jwtInterceptor).addPathPatterns("/stocknest/**");
+	    }
 }
