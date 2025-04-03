@@ -1,7 +1,8 @@
 package com.ecommerce.stocknest.service.product;
 
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -9,11 +10,8 @@ import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import com.ecommerce.stocknest.cache.CachingSetup;
 import com.ecommerce.stocknest.dto.AddProductDTO;
@@ -26,6 +24,7 @@ import com.ecommerce.stocknest.repository.CartItemRepository;
 import com.ecommerce.stocknest.repository.CartRepository;
 import com.ecommerce.stocknest.repository.CategoryRepository;
 import com.ecommerce.stocknest.repository.ProductRepository;
+import com.ecommerce.stocknest.service.cart.cartitem.CartItemService;
 
 import jakarta.transaction.Transactional;
 
@@ -47,11 +46,14 @@ public class ProductServiceImpl implements ProductService{
 	@Autowired
 	private ModelMapper modelMapper;
 	
-	@Autowired
-	private RestTemplate restTemplate;
+//	@Autowired
+//	private RestTemplate restTemplate;
 	
 	@Autowired
 	private CachingSetup cachingSetup;
+	
+	@Autowired
+	private CartItemService cartItemServiceImpl;
 	
 	@Value("${api.prefix}")
 	private String apiPrefix; 
@@ -61,7 +63,7 @@ public class ProductServiceImpl implements ProductService{
 	
 	@Override
 	@Transactional(rollbackOn = Exception.class)
-	@CacheEvict(value = "Cache_Product_All", allEntries = true)
+//	@CacheEvict(value = "Cache_Product_All", allEntries = true)
 	public ProductDTO addProduct(AddProductDTO productDTO) {
 	    Product product = modelMapper.map(productDTO, Product.class);
 
@@ -85,14 +87,18 @@ public class ProductServiceImpl implements ProductService{
 	    {
 	    	throw new ExecutionFailed("Product category is not Provided");
 	    }
+	    
+//	    cachingSetup.clearCacheByNames(Arrays.asList("Cache_Product_All","Cache_Product"));
 
 	    // Save the product and return the ProductDTO
-	    return modelMapper.map(productRepository.save(product), ProductDTO.class);
+	    		product = productRepository.save(product);
+	    		cachingSetup.clearCacheByNames(getProductCacheKeys(product));
+	    	    return modelMapper.map(product, ProductDTO.class);
 	}
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
-	@Cacheable(value = "Cache_Product", key = "#productId")
+	@Cacheable(value = "Cache_Product_Id", key = "#productId")
 	public ProductDTO getProductById(Long productId) {
 		// TODO Auto-generated method stub
 		
@@ -104,13 +110,13 @@ public class ProductServiceImpl implements ProductService{
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
-	@CacheEvict(value = "Cache_Product", key = "#productId" )
+//	@CacheEvict(value = { "Cache_Product_All", "Cache_Product" }, allEntries = true, key = "#productId")
 	public void deleteProductById(Long productId) {
 		// TODO Auto-generated method stub
 		
 		Product product = productRepository.findById(productId)
 	            .orElseThrow(() -> new NoSuchElementException("Product with Id:- " + productId + " is not Present"));
-		
+	    
 		// Remove all related CartItems
 	    List<CartItem> cartItems = cartItemRepository.findByProduct_ProductId(productId);
 	    if (!cartItems.isEmpty()) {
@@ -133,14 +139,16 @@ public class ProductServiceImpl implements ProductService{
 
 	    // Delete the product
 	    productRepository.delete(product);
-	    cachingSetup.clearCacheByNames(Arrays.asList("Cache_Product_All"));
+	    cachingSetup.clearCacheByNames(getProductCacheKeys(product));
+//	    cachingSetup.clearCacheByNames(Arrays.asList("Cache_Product_All","Cache_Product"));
+	    
 		
 	}
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
-	@CachePut(value = "Cache_Product", key = "#productId")
-	@CacheEvict(value = "Cache_Product_All", allEntries = true)
+//	@CachePut(value = "Cache_Product_Id", key = "#productId")
+//	@CacheEvict(value = "Cache_Product_All", allEntries = true)
 	public ProductDTO updateProductById(ProductDTO productDTO, Long productId) {
 		// TODO Auto-generated method stub
 		// Find existing product, else throws error
@@ -176,11 +184,17 @@ public class ProductServiceImpl implements ProductService{
         }
 
         if (isPriceUpdated) {
-            String url = baseURL+"/cartitem/update-prices?productId=" + productId + "&newPrice=" + productDTO.getPrice();
-            restTemplate.put(url, null);
+        	cartItemServiceImpl.updateCartItemsForProductPriceChange(productId, productDTO.getPrice());
+        	
+//            String url = baseURL+"/cartitem/update-prices?productId=" + productId + "&newPrice=" + productDTO.getPrice();
+//            restTemplate.put(url, null);
         }
-        
-		return modelMapper.map(productRepository.save(existingProduct), ProductDTO.class);	
+//        cachingSetup.clearCacheByNames(Arrays.asList("Cache_Product"));
+      
+//		return modelMapper.map(productRepository.save(existingProduct), ProductDTO.class);
+        existingProduct = productRepository.save(existingProduct);
+        cachingSetup.clearCacheByNames(getProductCacheKeys(existingProduct));
+		return modelMapper.map(existingProduct, ProductDTO.class);	
 	}
 	
 	
@@ -197,7 +211,7 @@ public class ProductServiceImpl implements ProductService{
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
-	@Cacheable(value = "Cache_Product", key = "#category")
+	@Cacheable(value = "Cache_Product_Category", key = "#category")
 	public List<Product> getProductsByCategory(String category) {
 		// TODO Auto-generated method stub
 		return productRepository.findByCategoryNameIgnoreCase(category)
@@ -207,7 +221,7 @@ public class ProductServiceImpl implements ProductService{
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
-	@Cacheable(value = "Cache_Product", key = "#brand")
+	@Cacheable(value = "Cache_Product_Brand", key = "#brand")
 	public List<Product> getProductsByBrand(String brand) {
 		// TODO Auto-generated method stub
 		
@@ -218,7 +232,7 @@ public class ProductServiceImpl implements ProductService{
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
-	@Cacheable(value = "Cache_Product", key = "#category + '_' + #brand")
+	@Cacheable(value = "Cache_Product_CategoryAndBrand", key = "#category + '_' + #brand")
 	public List<Product> getProductsByCategoryAndBrand(String category, String brand) {
 		// TODO Auto-generated method stub
 		return productRepository.findByCategoryNameIgnoreCaseAndBrandIgnoreCase(category, brand)
@@ -228,26 +242,29 @@ public class ProductServiceImpl implements ProductService{
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
-	@Cacheable(value = "Cache_Product", key = "#name")
+	@Cacheable(value = "Cache_Product_Name", key = "#name")
 	public List<Product> getProductsByName(String name) {
 		// TODO Auto-generated method stub
 		return productRepository.findByNameIgnoreCase(name)
+				.filter(products -> !products.isEmpty())// Ensure the list is not empty
 				.orElseThrow(()-> new NoSuchElementException("Products with Name:-" +name +" is not Present"));
 	}
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
-	@Cacheable(value = "Cache_Product", key = "#brand + '_' + #name")
+	@Cacheable(value = "Cache_Product_BrandAndName", key = "#brand + '_' + #name")
 	public List<Product> getProductsByBrandAndName(String brand, String name) {
 		// TODO Auto-generated method stub
 		return productRepository.findByBrandIgnoreCaseAndNameIgnoreCase(brand, name)
-				.orElseThrow( () -> new NoSuchElementException("Products with name :- " +name+" and brand :- " + brand +" is not present") );
+		        .filter(products -> !products.isEmpty()) // Ensure the list is not empty
+		        .orElseThrow(() -> new NoSuchElementException("Products with name: " + name + " and brand: " + brand + " are not present"));
+
 				
 	}
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
-	@Cacheable(value = "Cache_Product", key = "#count + '_' +#brand + '_' + #name")
+	@Cacheable(value = "Cache_Product_CountBrandAndName", key = "#count + '_' +#brand + '_' + #name")
 	public Long countProductsByBrandAndName(String brand, String name) {
 		// TODO Auto-generated method stub
 		 Long count = productRepository.countByBrandIgnoreCaseAndNameIgnoreCase(brand, name);
@@ -257,5 +274,15 @@ public class ProductServiceImpl implements ProductService{
 		        throw new NoSuchElementException("No Products with brand:- " + brand + " and name:- " + name);
 		    }
 	}
-
+	
+	private Map<String, String> getProductCacheKeys(Product product) {
+	    Map<String, String> cacheKeys = new HashMap<>();
+	    cacheKeys.put("Cache_Product_Category", product.getCategory().getName());
+	    cacheKeys.put("Cache_Product_Brand", product.getBrand());
+	    cacheKeys.put("Cache_Product_Name", product.getName());
+	    cacheKeys.put("Cache_Product_CategoryAndBrand", product.getCategory().getName() + "_" + product.getBrand());
+	    cacheKeys.put("Cache_Product_BrandAndName", product.getBrand() + "_" + product.getName());
+	    return cacheKeys;
+	
+	}
 }
