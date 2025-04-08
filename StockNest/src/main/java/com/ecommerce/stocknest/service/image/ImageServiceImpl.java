@@ -9,7 +9,6 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -45,6 +44,7 @@ public class ImageServiceImpl implements ImageService {
 	@Cacheable(value = "Cache_Image", key = "#imageId" )
 	public Image getImageById(Long imageId) {
 		// TODO Auto-generated method stub
+		
 		return imageRepository.findById(imageId)
 				.orElseThrow(() -> new NoSuchElementException("Image with Id :- "+imageId+" is not found"));
 	}
@@ -91,13 +91,12 @@ public class ImageServiceImpl implements ImageService {
 	@CacheEvict(value = "Cache_Image", key = "#imageId" )
 	public void deleteImageById(Long imageId) {
 		// TODO Auto-generated method stub
-		System.out.println("in delete");
 		Optional<Image> imageOptional = imageRepository.findById(imageId);
 
 		if (imageOptional.isPresent()) {
 		    Image image = imageOptional.get();
 		    imageRepository.delete(image);
-		    cachingSetup.clearCacheByNames(Arrays.asList("Cache_Image_All"));
+		    cachingSetup.clearCacheByNames(Arrays.asList("Cache_Image_All","Cache_Image","Cache_Image_Product","Cache_Product_All"));
 		} else {
 		    throw new NoSuchElementException("Image with Id:- " + imageId + " is not Present");
 		}
@@ -105,7 +104,7 @@ public class ImageServiceImpl implements ImageService {
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
-	@CacheEvict(value = "Cache_Image_All", allEntries = true)
+	@CacheEvict(value = "Cache_Product", key = "#productId" )
 	public List<ImageDTO> saveImages(List<MultipartFile> files, Long productId) throws Exception {
 		// TODO Auto-generated method stub
 		Product product = productRepository.findById(productId)
@@ -146,7 +145,7 @@ public class ImageServiceImpl implements ImageService {
 				    imageDTO.setProductDTO(addProductDTO);
 				    savedImageDto.add(imageDTO);
 				    
-				  
+				    cachingSetup.clearCacheByNames(Arrays.asList("Cache_Image_All","Cache_Image","Cache_Image_Product","Cache_Product_All"));
 			    }
 			catch(Exception e)
 			{
@@ -159,19 +158,21 @@ public class ImageServiceImpl implements ImageService {
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
-	@CachePut(value = "Cache_Image", key = "#imageId" )
-	@CacheEvict(value = "Cache_Image_All", allEntries = true)
-	public void updateImage(MultipartFile file, Long imageId) throws Exception {
+	@CacheEvict(value = "Cache_Image", key = "#imageId" )
+	public Image updateImage(MultipartFile file, Long imageId) throws Exception {
 	    // Fetch the image by ID
 	    Image image = getImageById(imageId);
 	    try {
+	    	
 	        // Update image details
 	        image.setFileName(file.getOriginalFilename()); // Set file name
 	        image.setFileType(file.getContentType());      // Set file type (corrected)
 	        image.setImage(file.getBytes()); // Set file as Blob
+	        
 
 	        // Save the updated image
-	        imageRepository.save(image);
+	        cachingSetup.clearCacheByNames(Arrays.asList("Cache_Image_All","Cache_Image_Product"));
+	         return imageRepository.save(image);
 	    } catch (Exception e) {
 	        // Log and rethrow the exception for clarity
 	        throw new Exception("Failed to update image: " + e.getMessage(), e);
